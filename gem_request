@@ -1,0 +1,61 @@
+#instrucciones para audios
+from google.cloud import storage
+import librosa
+import soundfile as sf
+import vertexai
+from vertexai.generative_models import GenerativeModel, Part
+from vertexai.generative_models import HarmCategory, HarmBlockThreshold, SafetySetting
+
+
+def gemini_request(system_inst:str,
+                   prompt:str,
+                   audio_uri:str,
+                   project:str = "poner nombre del proyecto",
+                   location:str = "depende de cual este habilitada pero la mas razonable debiese ser us-east4",
+                   model_name:str = "gemini-1.5-flash-002" # Existen mas pero para este ejemplo se deja este
+                   ):
+  vertexai.init(project=project, location=location)
+  model = GenerativeModel(
+    model_name=model_name,
+    system_instruction=[system_inst] #aqui dejar si es que necesita mayor contexto del audio
+    )
+  generation_config = {
+    "max_output_tokens": 8192,
+    "temperature": 0, #se deja para menor creatividad de las respuestas.
+    "top_p": 1,
+    "top_k": 1,
+    "seed": 42
+    }
+  safety_settings = [
+    SafetySetting(
+      category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+      threshold=HarmBlockThreshold.BLOCK_NONE,
+      ),
+    SafetySetting(
+      category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+      threshold=HarmBlockThreshold.BLOCK_NONE,
+      ),
+    SafetySetting(
+      category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold=HarmBlockThreshold.BLOCK_NONE,
+      ),
+    SafetySetting(
+      category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+      threshold=HarmBlockThreshold.BLOCK_NONE,
+      ),
+    ]
+  if audio_uri:
+    audio_file_uri = audio_uri
+    audio_file = Part.from_uri(audio_file_uri, mime_type="audio/mpeg")
+    content = [audio_file, prompt]
+  else:
+    content = [prompt]
+  response = model.generate_content(
+    content,
+    generation_config=generation_config,
+    safety_settings=safety_settings,
+    stream=False,
+    )
+  return response.text
+
+
