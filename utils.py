@@ -105,4 +105,26 @@ def copy_blob(
       destination_bucket.name
   )
 )
+
+def download_blob(project_id:str, bucket_name:str, source_blob_name:str, destination_file_name:str):
+  """Downloads a blob from the bucket."""
+  storage_client = storage.Client(project_id)
+  bucket = storage_client.bucket(bucket_name)
+
+  blob 0 bucket.blob(source_blob_name)
+  blob.download_to_filename(destination_file_name)
+
+  print(
+    "Downloaded storage object {} from bucket {} to local file {}.".format(
+      source_blob_name, bucket_name, destination_file_name
+    )
+  )
+
+def create_bigquery_table_with_schema(bigquery_client: bigquery.Client, dataset_id:str, table_id:str, schema:list):
+  """Function to create a table with given schema"""
+  table_ref = bigquery_client.dataset(dataset_id).table(table_id)
+  table = bigquery.Table(table_ref, schema=schema)
+  return bigquery_client.create_table(table, exists_ok=True)
+
+
     
